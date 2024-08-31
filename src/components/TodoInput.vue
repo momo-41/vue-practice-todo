@@ -5,7 +5,18 @@ import { statuses } from "@/const/statuses";
 const input = ref("");
 const inputDate = ref("");
 
+const isErrMsg = ref(false);
+//エラーメッセージを出すか出さないかの判別をするための変数
+
 const onSubmitForm = () => {
+  if (input.value == "" || inputDate.value == "") {
+    isErrMsg.value = true;
+    event.preventDefault();
+    //エラーメッセージを表示するときはリロードをしないようにする
+    //formを送信するとリロードされる仕様になっている
+    return;
+  }
+
   const items = JSON.parse(localStorage.getItem("items")) || [];
   //ローカルストレージからのデータの取得はgetItem(key)
   //ローカルストレージには文字列(JSON)形式で保存されているのでJSON.parse()で配列で扱えるように変換
@@ -29,6 +40,8 @@ const onSubmitForm = () => {
 
 <template>
   <div>
+    <p v-if="isErrMsg">タスク・期限を両方入力してください</p>
+    <!-- isErrMsgがtrueの時だけ上記の文字が表示される -->
     <form @submit="onSubmitForm">
       <label>やること<input type="text" v-model="input" /></label>
       <label>期限<input type="date" v-model="inputDate" /></label>

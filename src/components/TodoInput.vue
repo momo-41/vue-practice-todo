@@ -5,10 +5,7 @@ import { statuses } from "@/const/statuses";
 const input = ref("");
 const inputDate = ref("");
 
-const onSubmitForm = (event) => {
-  // console.log(input.value);
-  // event.preventDefault(); //submitイベントの自動リロードを防いで常にコンソールにデータを表示する
-
+const onSubmitForm = () => {
   const items = JSON.parse(localStorage.getItem("items")) || [];
   //ローカルストレージからのデータの取得はgetItem(key)
   //ローカルストレージには文字列(JSON)形式で保存されているのでJSON.parse()で配列で扱えるように変換

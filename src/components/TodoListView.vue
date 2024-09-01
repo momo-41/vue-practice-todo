@@ -22,7 +22,6 @@ const onEdit = (id) => {
 };
 
 let isErrMsg = ref(false);
-
 const onUpdate = (id) => {
   if (inputContent.value == "" || inputLimit.value == "") {
     isErrMsg.value = true;
@@ -43,11 +42,46 @@ const onUpdate = (id) => {
   localStorage.setItem("items", JSON.stringify(items));
   isErrMsg.value = false; //自動リロードがないため手動でfalseを設定？
 };
+
+let isShowModal = ref(false);
+let deleteItemId = ""; //削除対象のItemのID
+let deleteItemContent = ref();
+const showDeleteModal = (id) => {
+  isShowModal.value = true;
+  deleteItemId = id;
+  deleteItemContent = items.value[id].content;
+};
+
+const onDeleteItem = () => {
+  items.value.splice(deleteItemId, 1); //対象タスクの削除。deleteItemIdの番号のタスクを取り除く処理
+
+  items.value = items.value.map((item, index) => ({
+    id: index,
+    content: item.content,
+    limit: item.limit,
+    state: item.state,
+    onEdit: item.onEdit,
+  }));
+
+  localStorage.setItem("items", JSON.stringify(items.value));
+  isShowModal.value = false;
+};
+
+const onHideModal = () => {
+  isShowModal.value = false;
+};
 </script>
 
 <template>
   <div>
     <p v-if="isErrMsg">タスク・期限を両方入力してください</p>
+    <div class="modal" v-if="isShowModal">
+      <div class="modal-content">
+        <p>{{ deleteItemContent }}を削除してもよろしいでしょうか</p>
+        <button @click="onDeleteItem()">はい</button>
+        <button @click="onHideModal()">キャンセル</button>
+      </div>
+    </div>
     <table>
       <!-- タスクを画面に表示させるためのtable -->
       <!-- ローカルストレージから受け取ったデータをtableで表示 -->
@@ -92,10 +126,29 @@ const onUpdate = (id) => {
           <!-- どのタスクを編集モードにするか判別させるために引数でidを持たせる -->
           <button v-else @click="onUpdate(item.id)">完了</button>
         </td>
-        <td><button>削除</button></td>
+        <td>
+          <button @click="showDeleteModal(item.id)">削除</button>
+        </td>
       </tr>
     </table>
   </div>
 </template>
 
-<style scoped></style>
+<style scoped>
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.modal-content {
+  background: #fff;
+  padding: 20px;
+  border-radius: 8px;
+}
+</style>

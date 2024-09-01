@@ -17,13 +17,28 @@ const onEdit = (id) => {
   inputLimit.value = items.value[id].limit;
   inputState.value = items.value[id].state;
   items.value[id].onEdit = true;
-  // =true にしていたが、編集モードの時に編集ボタンを押しても変数の値がtrueのままなことに気づき !items.value[id].onEdit にした
-  //onUpdateでfalseにするので =true に戻した
+  //上記で編集モードにしてから以下で isOnEditOther=false にして
+  //今編集モードになっているもの以外を対象として、それらのonEditがtrueになっているか以下で確かめる
+
+  let isOnEditOther = false; //他にonEditがtrueのものがないか確認する変数
+  items.value.map((item) => {
+    if (item.onEdit) {
+      isOnEditOther = true;
+      return;
+    }
+  });
+  if (isOnEditOther) {
+    errMsg.value = "他に編集中のタスクがあります";
+    isErrMsg.value = true;
+    return;
+  }
 };
 
+let errMsg = ref(""); //エラーメッセージが入る変数
 let isErrMsg = ref(false);
 const onUpdate = (id) => {
   if (inputContent.value == "" || inputLimit.value == "") {
+    errMsg.value = "タスクの内容と期限を入力してください";
     isErrMsg.value = true;
     return;
   }
@@ -70,11 +85,23 @@ const onDeleteItem = () => {
 const onHideModal = () => {
   isShowModal.value = false;
 };
+
+const today = new Date();
+
+const sortByLimit = () => {
+  items.value.sort((a, b) => new Date(a.limit) - new Date(b.limit)); //日付の比較
+  localStorage.setItem("items", JSON.stringify(items.value));
+};
+
+const sortById = () => {
+  items.value.sort((a, b) => a.id - b.id); //日付の比較
+  localStorage.setItem("items", JSON.stringify(items.value));
+};
 </script>
 
 <template>
   <div>
-    <p v-if="isErrMsg">タスク・期限を両方入力してください</p>
+    <p v-if="isErrMsg">{{ errMsg }}</p>
     <div class="modal" v-if="isShowModal">
       <div class="modal-content">
         <p>{{ deleteItemContent }}を削除してもよろしいでしょうか</p>
@@ -86,15 +113,20 @@ const onHideModal = () => {
       <!-- タスクを画面に表示させるためのtable -->
       <!-- ローカルストレージから受け取ったデータをtableで表示 -->
       <tr>
-        <th class="th-id">ID</th>
+        <th class="th-id">ID<button @click="sortById()">↓</button></th>
         <th class="th-value">やること</th>
-        <th class="th-limit">期限</th>
+        <th class="th-limit">期限 <button @click="sortByLimit()">↓</button></th>
         <th class="th-state">状態</th>
         <th class="th-edit">編集</th>
         <th class="th-delete">削除</th>
       </tr>
       <!-- タスクの件数分表示 -->
-      <tr v-for="item in items" :key="item.id">
+      <tr
+        v-for="item in items"
+        :key="item.id"
+        :class="{ red: new Date(item.limit) < today }"
+      >
+        <!-- trueだったらredになる -->
         <!-- 変数名inリスト名 -->
         <td>
           {{ item.id }}
@@ -146,9 +178,14 @@ const onHideModal = () => {
   justify-content: center;
   align-items: center;
 }
+
 .modal-content {
   background: #fff;
   padding: 20px;
   border-radius: 8px;
+}
+
+.red {
+  color: red;
 }
 </style>
